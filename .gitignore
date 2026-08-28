@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+.venv/
+venv/
+
+# Environment variables
+.env
+
+# MLflow
+mlruns/
+mlflow.db
+mlflow.db-journal
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+.history/
+
+# Data
+data/
+
+# OS
+.DS_Store
+Thumbs.db

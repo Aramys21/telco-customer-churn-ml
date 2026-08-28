@@ -1,0 +1,14 @@
+[project]
+name = "chum-prediction"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "great-expectations>=1.21.0",
+    "lightgbm>=4.7.0",
+    "numpy>=2.4.6",
+    "optuna>=4.9.0",
+    "pandas>=3.0.5",
+    "xgboost>=3.2.0",
+]
