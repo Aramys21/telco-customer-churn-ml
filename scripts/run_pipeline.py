@@ -123,6 +123,7 @@ def main(args):
 
         print(
             f"✅ Data loaded: "
+            
             f"{df.shape[0]} rows, "
             f"{df.shape[1]} columns"
         )
