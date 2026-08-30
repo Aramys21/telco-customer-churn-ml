@@ -1,37 +1,41 @@
-"""
-FASTAPI + GRADIO SERVING APPLICATION - Production-Ready ML Model Serving
-========================================================================
+"""Portfolio-ready ML application for telco churn prediction."""
 
-This application provides a complete serving solution for the Telco Customer Churn model
-with both programmatic API access and a user-friendly web interface.
-
-Architecture:
-- FastAPI: High-performance REST API with automatic OpenAPI documentation
-- Gradio: User-friendly web UI for manual testing and demonstrations
-- Pydantic: Data validation and automatic API documentation
-"""
+from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 import gradio as gr
-from src.serving.inference import predict  # Core ML inference logic
 
-# Initialize FastAPI application
+from src.serving.inference import predict
+
 app = FastAPI(
-    title="Telco Customer Churn Prediction API",
-    description="ML API for predicting customer churn in telecom industry",
-    version="1.0.0",
+    title="Telco Customer Churn Predictor",
+    description=(
+        "Machine learning solution for predicting telecom customer churn. "
+        "The app exposes a production-ready REST API and a user-friendly demo UI."
+    ),
+    version="1.1.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
 )
 
 
-# === HEALTH CHECK ENDPOINT ===
-# CRITICAL: Required for AWS Application Load Balancer health checks
 @app.get("/")
-def root():
-    """
-    Health check endpoint for monitoring and load balancer health checks.
-    """
+def root() -> dict[str, str]:
+    """Health check endpoint used by monitoring tools and deployment checks."""
     return {"status": "ok"}
+
+
+@app.get("/health")
+def health() -> dict[str, str | bool]:
+    """Portfolio-friendly health endpoint exposing the service state."""
+    return {
+        "status": "ok",
+        "service": "telco-churn-predictor",
+        "api_ready": True,
+        "ui_ready": True,
+    }
 
 
 # === REQUEST DATA SCHEMA ===
@@ -220,14 +224,14 @@ demo = gr.Interface(
     outputs=gr.Textbox(label="Churn Prediction", lines=2),
     title="🔮 Telco Customer Churn Predictor",
     description="""
-    **Predict customer churn probability using machine learning**
-    
-    Fill in the customer details below to get a churn prediction. The model uses XGBoost trained on 
-    historical telecom customer data to identify customers at risk of churning.
-    
-    💡 **Tip**: Month-to-month contracts with fiber optic internet and electronic check payments 
-    tend to have higher churn rates.
+    <div style='text-align: left; font-size: 1.0rem; line-height: 1.5;'>
+        <strong>Customer churn risk assessment</strong><br>
+        This demo uses a trained machine learning model to estimate whether a telecom customer is likely to leave.
+        <br><br>
+        <em>Portfolio project:</em> operational ML, API deployment, and user-facing analytics in a single application.
+    </div>
     """,
+    theme=gr.themes.Soft(primary_hue="indigo", secondary_hue="blue"),
     examples=[
         # High churn risk example
         [
