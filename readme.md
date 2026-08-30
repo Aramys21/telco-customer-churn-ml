@@ -161,7 +161,3 @@ This project highlights:
 ## License
 
 This project is intended for portfolio and educational use.
-
-## Author
-
-Your Name
