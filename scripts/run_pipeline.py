@@ -12,9 +12,14 @@ import argparse
 import json
 import joblib
 
+# Windows terminals often default to cp1252, which cannot print the status
+# symbols used by this script.  Make command-line execution deterministic.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 import pandas as pd
 import mlflow
-import mlflow.sklearn
+import mlflow.xgboost
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
@@ -84,12 +89,9 @@ def main(args):
         )
     )
 
-    # Use custom MLflow URI if provided,
-    # otherwise use local mlruns directory
-    mlruns_path = (
-        args.mlflow_uri
-        or f"file://{project_root}/mlruns"
-    )
+    # MLflow 3 no longer enables the file-store backend by default.  A local
+    # SQLite database remains self-contained while working with current MLflow.
+    mlruns_path = args.mlflow_uri or f"sqlite:///{project_root.replace(os.sep, '/')}/mlflow.db"
 
     # Configure MLflow tracking URI
     mlflow.set_tracking_uri(mlruns_path)
@@ -134,8 +136,7 @@ def main(args):
         # ====================================================
 
         print(
-            "🔍 Validating data quality "
-            "with Great Expectations..."
+            "🔍 Validating data quality..."
         )
 
         is_valid, failed = validate_telco_data(df)
@@ -617,10 +618,14 @@ def main(args):
         print("💾 Saving model to MLflow...")
 
 
-        mlflow.sklearn.log_model(
-            model,
-            artifact_path="model"
-        )
+        # Keep a stable local copy for the FastAPI/Gradio serving application.
+        model_path = os.path.join(artifacts_dir, "model.json")
+        model.save_model(model_path)
+        mlflow.log_artifact(model_path)
+
+        # XGBoost has its own MLflow flavour.  Logging it as an sklearn model
+        # fails in MLflow 3 because the booster is intentionally not skops-safe.
+        mlflow.xgboost.log_model(model, name="model")
 
 
         print(

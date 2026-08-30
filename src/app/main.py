@@ -11,8 +11,8 @@ Architecture:
 - Pydantic: Data validation and automatic API documentation
 """
 
-from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
 import gradio as gr
 from src.serving.inference import predict  # Core ML inference logic
 
@@ -68,9 +68,9 @@ class CustomerData(BaseModel):
     PaymentMethod: str  # "Electronic check", "Mailed check", etc.
 
     # Numeric features
-    tenure: int  # Number of months with company
-    MonthlyCharges: float  # Monthly charges in dollars
-    TotalCharges: float  # Total charges to date
+    tenure: int = Field(ge=0, le=120)  # Number of months with company
+    MonthlyCharges: float = Field(ge=0, le=200)  # Monthly charges in dollars
+    TotalCharges: float = Field(ge=0, le=100_000)  # Total charges to date
 
 
 # === MAIN PREDICTION API ENDPOINT ===
@@ -90,11 +90,10 @@ def get_prediction(data: CustomerData):
     """
     try:
         # Convert Pydantic model to dict and call inference pipeline
-        result = predict(data.dict())
+        result = predict(data.model_dump())
         return {"prediction": result}
     except Exception as e:
-        # Return error details for debugging (consider logging in production)
-        return {"error": str(e)}
+        raise HTTPException(status_code=503, detail=str(e)) from e
 
 
 # =================================================== #
@@ -154,8 +153,10 @@ def gradio_interface(
     }
 
     # Call same inference pipeline as API endpoint
-    result = predict(data)
-    return str(result)  # Return as string for Gradio display
+    try:
+        return str(predict(data))
+    except Exception as exc:
+        return f"Prediction unavailable: {exc}"
 
 
 # === GRADIO UI CONFIGURATION ===
@@ -271,7 +272,6 @@ demo = gr.Interface(
             2700.0,
         ],
     ],
-    theme=gr.themes.Soft(),  # Professional appearance
 )
 
 # === MOUNT GRADIO UI INTO FASTAPI ===
