@@ -1,4 +1,5 @@
-from fastapi.testclient import TestClient
+import httpx
+import pytest
 
 from src.app import main
 
@@ -25,26 +26,43 @@ PAYLOAD = {
 }
 
 
-def test_health_check_returns_ok() -> None:
-    response = TestClient(main.app).get("/")
+@pytest.fixture
+def anyio_backend() -> str:
+    return "asyncio"
+
+
+@pytest.mark.anyio
+async def test_health_check_returns_ok() -> None:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=main.app), base_url="http://testserver"
+    ) as client:
+        response = await client.get("/")
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
 
 
-def test_predict_returns_inference_result(monkeypatch) -> None:
+@pytest.mark.anyio
+async def test_predict_returns_inference_result(monkeypatch) -> None:
     expected = {"label": "Likely to churn", "churn_probability": 0.9521}
     monkeypatch.setattr(main, "predict", lambda payload: expected)
 
-    response = TestClient(main.app).post("/predict", json=PAYLOAD)
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=main.app), base_url="http://testserver"
+    ) as client:
+        response = await client.post("/predict", json=PAYLOAD)
 
     assert response.status_code == 200
     assert response.json() == {"prediction": expected}
 
 
-def test_predict_rejects_invalid_customer_data() -> None:
+@pytest.mark.anyio
+async def test_predict_rejects_invalid_customer_data() -> None:
     invalid_payload = {**PAYLOAD, "tenure": -1}
 
-    response = TestClient(main.app).post("/predict", json=invalid_payload)
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=main.app), base_url="http://testserver"
+    ) as client:
+        response = await client.post("/predict", json=invalid_payload)
 
     assert response.status_code == 422
