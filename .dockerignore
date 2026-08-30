@@ -1,0 +1,31 @@
+# Version control and local tooling
+.git/
+.github/
+.history/
+.venv/
+venv/
+.vscode/
+
+# Python caches and test output
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local runtime data and experiment tracking
+data/
+mlruns/
+mlflow.db
+mlflow.db-journal
+
+# Development-only content
+notebooks/
+tests/
+great_expectations/
+docker/
+.env
+
+# Operating-system files
+.DS_Store
+Thumbs.db
